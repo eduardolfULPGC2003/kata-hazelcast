@@ -9,15 +9,16 @@ services:
     ports:
       - "5702:5701"
 
-  hazelcast-monitor:
-    image: hazelcast-example
-    environment:
-      - HAZELCAST_MODE=MONITOR
-      - HAZELCAST_MEMBER=hazelcast-monitor
-    networks:
-      - hazelcast-net
-    ports:
-      - "5703:5701"
+# antother PC code (Eduardo)
+#  eduardo-read:
+#    image: hazelcast-example
+#    environment:
+#      - HAZELCAST_MODE=MONITOR
+#      - HAZELCAST_MEMBER=eduardo-read
+#    networks:
+#      - hazelcast-net
+#    ports:
+#      - "5703:5701"
 
 networks:
   hazelcast-net:
