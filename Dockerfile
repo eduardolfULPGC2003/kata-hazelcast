@@ -36,6 +36,7 @@ RUN adduser \
     appuser
 USER appuser
 
+
 COPY --from=package /build/target/app.jar app.jar
 
 # Expose the default Hazelcast port

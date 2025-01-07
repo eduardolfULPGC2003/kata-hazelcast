@@ -1,19 +1,18 @@
 package org.example;
 
-//run from wsl
-// mvn clean package
-// HAZELCAST_MODE=INPUT HAZELCAST_MEMBER=127.0.0.1 java -jar target/hazelcast-1.0-SNAPSHOT.jar
-
 import com.hazelcast.collection.IList;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 
+import java.io.IOException;
+import java.util.Arrays;
+
 public class HazelcastExample {
-    public static void main(String[] args) throws InterruptedException {
+    public static void main(String[] args) throws InterruptedException, IOException {
         Config config = new Config();
 
-        // Fetch the environment variables for mode and member address
+        // Fetch the environment variables for mode and member addresses
         String mode = System.getenv("HAZELCAST_MODE");
         String member = System.getenv("HAZELCAST_MEMBER");
 
@@ -25,10 +24,18 @@ public class HazelcastExample {
             throw new IllegalArgumentException("HAZELCAST_MEMBER must be set with a valid address");
         }
 
-        // Configure the TCP/IP join for Hazelcast
+        // Add the primary member (could be self or a predefined one)
         config.getNetworkConfig().getJoin().getTcpIpConfig()
                 .setEnabled(true)
                 .addMember(member);
+
+        // Fetch all other container IPs in the same Docker network
+        String[] additionalMembers = new String[] {"hazelcast-input", "hazelcast-monitor", "eduardo-read"}; // Use service names
+        for (String ip : additionalMembers) {
+            System.out.println("Adding member: " + ip);
+            config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(ip);
+        }
+
 
         HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
         IList<Integer> lista = instance.getList("lista");
