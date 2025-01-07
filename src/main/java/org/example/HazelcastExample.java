@@ -1,80 +1,56 @@
 package org.example;
+
+//run from wsl
+// mvn clean package
+// HAZELCAST_MODE=INPUT HAZELCAST_MEMBER=127.0.0.1 java -jar target/hazelcast-1.0-SNAPSHOT.jar
+
 import com.hazelcast.collection.IList;
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.map.IMap;
-
-import java.util.Map;
-import java.util.Scanner;
-
 
 public class HazelcastExample {
     public static void main(String[] args) throws InterruptedException {
         Config config = new Config();
 
-        /* config.getNetworkConfig().getJoin().getTcpIpConfig()
-                .setEnabled(true)
-                .addMember("192.168.1.138") // Your IP
-                .addMember("192.168.1.164") // Jose's IP
-                .addMember("192.168.1.165"); // Jose's IP */
+        // Fetch the environment variables for mode and member address
+        String mode = System.getenv("HAZELCAST_MODE");
+        String member = System.getenv("HAZELCAST_MEMBER");
 
-        /*config.getNetworkConfig().getInterfaces()
-                .setEnabled(true)
-                .addInterface("192.168.1.*");*/
+        if (mode == null || mode.isBlank()) {
+            throw new IllegalArgumentException("HAZELCAST_MODE must be set to either 'INPUT' or 'MONITOR'");
+        }
 
+        if (member == null || member.isBlank()) {
+            throw new IllegalArgumentException("HAZELCAST_MEMBER must be set with a valid address");
+        }
 
-
-        config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+        // Configure the TCP/IP join for Hazelcast
         config.getNetworkConfig().getJoin().getTcpIpConfig()
                 .setEnabled(true)
-                .addMember("192.168.100.2") // Nodo 1
-                .addMember("192.168.100.3");
+                .addMember(member);
 
         HazelcastInstance instance = Hazelcast.newHazelcastInstance(config);
-
         IList<Integer> lista = instance.getList("lista");
 
-        if (Integer.parseInt(args[0])==0){
+        if (mode.equalsIgnoreCase("INPUT")) {
+            // Run as input node
+            System.out.println("Running in INPUT mode, adding numbers to the list.");
             int id = 0;
-            while (true){
-                System.out.println(id);
+            while (true) {
+                System.out.println("Adding ID: " + id);
                 lista.add(id++);
                 Thread.sleep(2000);
             }
-        }
-
-        else {
-            while (true){
-                System.out.println("Hay "+lista.size()+" elementos en la lista");
+        } else if (mode.equalsIgnoreCase("MONITOR")) {
+            // Run as monitor node
+            System.out.println("Running in MONITOR mode, monitoring the list size.");
+            while (true) {
+                System.out.println("Current list size: " + lista.size());
                 Thread.sleep(5000);
             }
+        } else {
+            throw new IllegalArgumentException("Invalid HAZELCAST_MODE. Must be 'INPUT' or 'MONITOR'");
         }
-
-        /*IMap<String, String> map = instance.getMap("distributed-map");
-        map.put("user1", "Alice");
-        map.put("user2", "Bob");
-        System.out.println("User1: " + map.get("user1"));
-
-        Scanner scanner = new Scanner(System.in);
-        int user = 3;
-
-        // Bucle infinito con intervalo de 5 segundos entre cada iteración
-        while (true) {
-            System.out.println("Introduce una palabra para el usuario" + user + ": ");
-            String word = scanner.nextLine();
-            map.put("user" + user, word);
-            user++;
-
-            // Imprimir todas las entradas del mapa
-            System.out.println("Entradas en el mapa:");
-            for (Map.Entry<String, String> entry : map.entrySet()) {
-                System.out.println(entry.getKey() + ": " + entry.getValue());
-            }
-
-            // Pausa de 5 segundos (5000 milisegundos)
-            Thread.sleep(5000);
-        }*/
     }
 }
-
